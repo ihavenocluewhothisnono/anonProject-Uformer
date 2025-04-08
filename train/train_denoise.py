@@ -304,10 +304,8 @@ if opt.arch != 'UformerExtended':
 print("Now time is : ", datetime.datetime.now().isoformat())
 
 
-# ========================= EXTENSION START =========================
-# === Colorization Extension for UformerExtended Architecture ===
-
-
+# Extension Begins
+#itloads the colorization dataset, initializes the model, loss functions, and optimizer, and trains the model to map grayscale inputs to RGB outputs using both pixel-level and perceptual loss.
 if opt.arch == 'UformerExtended':
    print("\n[INFO] Starting colorization extension...\n")
    from torchvision import transforms
@@ -315,13 +313,10 @@ if opt.arch == 'UformerExtended':
    from model import UformerExtended as ColorizationUformer
    from losses import perceptual_loss
 
-
    color_transform = transforms.Compose([
        transforms.Resize((opt.train_ps, opt.train_ps)),
        transforms.ToTensor()
    ])
-
-
    color_dataset = ColorizationDataset(root_dir=opt.train_dir, transform=color_transform)
    color_loader = DataLoader(color_dataset, batch_size=opt.batch_size, shuffle=True, num_workers=opt.train_workers, pin_memory=False, drop_last=False)
    color_model = ColorizationUformer(img_size=opt.train_ps, in_chans=1, out_chans=3).cuda()
@@ -332,7 +327,7 @@ if opt.arch == 'UformerExtended':
 
    print(f"Loaded {len(color_dataset)} grayscale-to-RGB training samples.")
 
-
+    # begin the training loop of the model based on previous parameters
    for epoch in range(1, opt.nepoch + 1):
        color_model.train()
        total_loss = 0
@@ -346,11 +341,8 @@ if opt.arch == 'UformerExtended':
            color_optimizer.step()
            total_loss += loss.item()
 
-
        avg_loss = total_loss / len(color_loader)
        print(f"[Colorization Epoch {epoch}/{opt.nepoch}] Loss: {avg_loss:.4f}")
-
-
        torch.save({
            'epoch': epoch,
            'state_dict': color_model.state_dict(),
@@ -359,4 +351,4 @@ if opt.arch == 'UformerExtended':
 
 
    print("[INFO] Colorization training complete.")
-# ========================== EXTENSION END ==========================
+# end
