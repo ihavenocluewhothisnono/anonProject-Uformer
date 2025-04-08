@@ -89,7 +89,7 @@ def get_arch(opt):
        model_restoration = Uformer(img_size=opt.train_ps,embed_dim=32,win_size=8,token_projection='linear',token_mlp='leff',
            depths=[1, 2, 8, 8, 2, 8, 8, 2, 1],modulator=True,dd_in=opt.dd_in)
 
-
+   #here is where I define the new transformer model variant that I used. It ultimately reduces memory by using fewer attention heads, smaller embedding size, etc.
    elif arch == 'UformerExtended':
         from model import UformerExtended
         model_restoration = UformerExtended(img_size=opt.train_ps, embed_dim=opt.embed_dim,
