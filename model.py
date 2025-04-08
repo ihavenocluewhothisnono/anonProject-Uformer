@@ -1327,37 +1327,18 @@ class Uformer(nn.Module):
         flops += self.output_proj.flops(self.reso,self.reso)
         return flops
 
-#NEW
+#NEW, basically just replaces the previous reformer model and allows it to be less complex in terms of computation, switch input and output channel to support 
+#gray to RGB image reconstruction
 class UformerExtended(Uformer):
   def __init__(self, img_size=256, in_chans=1, out_chans=3, **kwargs):
-      """
-      Extension of Uformer for custom channel input/output, e.g., grayscale to RGB.
-      """
       super().__init__(img_size=img_size, in_chans=in_chans, dd_in=in_chans, **kwargs)
-
-
-
-
-      # Replace output projection for desired output channels
+      
+      # This is the output projection for desired output channels
       self.output_proj = OutputProj(in_channel=2*self.embed_dim, out_channel=out_chans, kernel_size=3, stride=1)
-
-
-
-
-      # Optional: override forward() to allow non-RGB skip connection if needed
       self.skip_connection_enabled = (in_chans == out_chans)
-
-
-
-
   def forward(self, x, mask=None):
       y = self.input_proj(x)
       y = self.pos_drop(y)
-
-
-
-
-      # Encoder
       conv0 = self.encoderlayer_0(y,mask=mask)
       pool0 = self.dowsample_0(conv0)
       conv1 = self.encoderlayer_1(pool0,mask=mask)
@@ -1366,46 +1347,19 @@ class UformerExtended(Uformer):
       pool2 = self.dowsample_2(conv2)
       conv3 = self.encoderlayer_3(pool2,mask=mask)
       pool3 = self.dowsample_3(conv3)
-
-
-
-
-      # Bottleneck
       conv4 = self.conv(pool3, mask=mask)
-
-
-
-
-      # Decoder
       up0 = self.upsample_0(conv4)
       deconv0 = torch.cat([up0,conv3],-1)
       deconv0 = self.decoderlayer_0(deconv0,mask=mask)
-
-
-
-
       up1 = self.upsample_1(deconv0)
       deconv1 = torch.cat([up1,conv2],-1)
       deconv1 = self.decoderlayer_1(deconv1,mask=mask)
-
-
-
-
       up2 = self.upsample_2(deconv1)
       deconv2 = torch.cat([up2,conv1],-1)
       deconv2 = self.decoderlayer_2(deconv2,mask=mask)
-
-
-
-
       up3 = self.upsample_3(deconv2)
       deconv3 = torch.cat([up3,conv0],-1)
       deconv3 = self.decoderlayer_3(deconv3,mask=mask)
-
-
-
-
-      # Output
       output = self.output_proj(deconv3)
       return x + output if self.skip_connection_enabled else output
 #END
