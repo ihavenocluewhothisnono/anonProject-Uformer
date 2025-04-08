@@ -2,14 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
-
-
 #NEW EXTENSION
-
-
+#uses the VGG16-pre trained base model
 import torchvision.models as models
-
 
 class VGGFeatureExtractor(nn.Module):
    def __init__(self, requires_grad=False):
@@ -20,27 +15,21 @@ class VGGFeatureExtractor(nn.Module):
            for param in self.features.parameters():
                param.requires_grad = False
 
-
    def forward(self, x):
        return self.features(x)
 
-
-vgg_extractor = VGGFeatureExtractor().cuda()
+vgg_extractor = VGGFeatureExtractor().cuda() ## set the extractor to the gpu to make ti go faster
 perceptual_criterion = nn.MSELoss()
 
-
+##the perceptual loss function that will extract features from both the predicted and ground truth images
 def perceptual_loss(pred, target):
     if pred.shape[1] == 1:
-        pred = pred.repeat(1, 3, 1, 1)   # [B, 1, H, W] → [B, 3, H, W]
+        pred = pred.repeat(1, 3, 1, 1)   # Had a huge issue with this, I needed to make the 1 convert to a 3 in order to be a RGB 
     if target.shape[1] == 1:
         target = target.repeat(1, 3, 1, 1)
     pred_features = vgg_extractor(pred)
     target_features = vgg_extractor(target)
     return perceptual_criterion(pred_features, target_features)
-
-
-
-
 #end
 
 
